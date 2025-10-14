@@ -17,4 +17,4 @@ console.log(alunos, '\n')
 alunos.shift(); // Remove o primeiro elemento de um array
 console.log(alunos);
 
-console.log(notas);
+console.log(alunos.length);
