@@ -231,3 +231,125 @@ Em forma resumida mas o comando é o mesmo do ciclo for e muito mais legivel, ai
     pokemonList.innerHTML += pokemons.map(convertPokemonToLi).join('');
 })
 ```
+
+
+# Lidando com múltiplas requisições 
+Pois bem conseguimos fazer e manipular nossa primeira requisição, porém, as informações que conseguimos no nosso exemplo são meio vagas, só tinhamos os nomes dos pokemons e a url de referência para preencher o li. Assim, para conseguir mais informações vamos precisar fazer uma requisição para cada pokemon em específico para adquirir seus detalhes: 
+
+## `Promise.all` 
+
+O método `Promise.all` ele recebe um array de promises e quando todas as requisições forem completadas o próximo passo acontece. Em conjunto com o `.map` é o que usaremos para fazer múltiplas requisições e somente quando elas forem resolvidas iremos mandar para o html
+
+## Passo a passo 
+
+* Função `getPokemonsDetail`: 
+
+Essa função ela irá receber um pokemon e irá retornar uma nova requisição já convertida em json
+
+- Do objeto que atualmente temos pegamos a url com o `pokemon.url` e iniciamos o `fetch` logo depois já transformando a response em json. 
+```js
+pokeApi.getPokemonsDetail = (pokemon) => {
+    return fetch(pokemon.url).then(response => response.json())
+}
+```
+
+- Depois utilizamos o .map para transformar nossa lista de pokemons em uma nova lista de requisições
+- Utilizarmos o `Promise.all` para esperar a lista de requisições ser resolvida antes de avançar para a próxima etapa
+
+```js
+.then(pokemons => pokemons.map(pokeApi.getPokemonsDetail))
+.then(detailRequests => Promise.all(detailRequests)) 
+```
+
+## Modificando o html 
+
+Agora que a nossa lista de pokemons está mais robusta podemos modificar nossa função `convertPokmeonToLi` para mostrar informações mais detalhadas, como mudar a numeração de série e a imagem:
+
+Criamos esta função para pegar o pokemon.types e transformar em uma li, o `map` aqui serve para caso o pokemon possua outros tipos, assim todas serão pegas como um array e transformadas em um li também.
+```js
+function convertPokemonTypesToLi(pokemonTypes) {
+    return pokemonTypes.map(typeSlot => `<li class="type">${typeSlot.type.name}</li>`)
+}
+```
+
+E depois atualizar nosso convertPokemon:
+
+```js
+function convertPokemonToLi(pokemon) {
+    return `
+        <li class="pokemon">
+            <span class="number">#${pokemon.order}</span>
+            <span class="name">${pokemon.name}</span>
+
+            <div class="detail">
+                <ol class="types">
+                    ${convertPokemonTypesToLi(pokemon.types).join('')}                      
+                </ol>
+
+                <img src="${pokemon.sprites.other.dream_world.front_default}"
+                    alt="${pokemon.name}">
+            </div>
+        </li>   
+    `
+}
+
+
+```
+
+
+# Converter o modelo do pokeAPI para nosso modelo
+
+Ao manipular as requisições pegas do pokeAPI vimos que existem muitas informações que não serão úteis para nossa aplicação, como sistema de lvl ou habilidades, então vamos criar um modelo nosso para usarmos somente o que for necessário 
+
+```js
+class Pokemon {
+    number;
+    name;
+    type; // O tipo principal, vai ser util para mudarmos o css 
+    types = [];
+    photo;
+}
+```
+
+- Faremos um novo then() e queremos que ele retorte uma instância da classe que criamos
+- E na função converteremos as referências dos pokemons do pokeApi para as da nossa classe 
+```js
+function convertPokeApiDetailToPokemon(pokeDetail) {
+    const pokemon = new Pokemon()
+    pokemon.number = pokeDetail.order
+    pokemon.name =  pokeDetail.name
+
+    const types = pokeDetail.types.map(typeSlot => typeSlot.type.name)
+    const [type] = types
+    
+    pokemon.types = types
+    pokemon.type = type
+
+    pokemon.photo = pokeDetail.sprites.other.dream_world.front_default
+
+    return pokemon
+}
+```
+
+E atualizar novamente na função convertPokmeonToLi. Veja que nem precisamos mais da função ja que a referência ficou relativamente simplificada
+
+```js
+function convertPokemonToLi(pokemon) {
+    return `
+        <li class="pokemon">
+            <span class="number">#${pokemon.number}</span>
+            <span class="name">${pokemon.name}</span>
+
+            <div class="detail">
+                <ol class="types">
+                    ${pokemon.types.map(type => `<li class="type">${type}</li>`)}                      
+                </ol>
+
+                <img src="${pokemon.photo}"
+                    alt="${pokemon.name}">
+            </div>
+        </li>
+    
+    `
+}
+```
