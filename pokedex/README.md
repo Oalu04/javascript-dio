@@ -254,7 +254,7 @@ pokeApi.getPokemonsDetail = (pokemon) => {
 ```
 
 - Depois utilizamos o .map para transformar nossa lista de pokemons em uma nova lista de requisições
-- Utilizarmos o `Promise.all` para esperar a lista de requisições ser resolvida antes de avançar para a próxima etapa
+- Utilizamos o `Promise.all` para esperar a lista de requisições ser resolvida antes de avançar para a próxima etapa
 
 ```js
 .then(pokemons => pokemons.map(pokeApi.getPokemonsDetail))

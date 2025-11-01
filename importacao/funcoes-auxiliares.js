@@ -1,5 +1,3 @@
-
-
 function gets() {
     return 10;
 }
